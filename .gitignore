@@ -1,0 +1,16 @@
+# Mac
+.DS_Store
+
+#Jetbrains
+.idea
+
+# Some of our applications generate logs, which should be ignored by git
+logs/
+
+# VS Code
+.vscode
+
+# Other
+**/.factorypath
+**/developer.properties
+**/*.csv
