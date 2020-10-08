@@ -160,6 +160,10 @@ def generateStoryPointsDataFrame(boardId, taskColumnsIds, finishedTaskColumn, st
     storyPointsDataFrame['Not Done'] = notDoneDic.values()
     # Add Title to Index
     storyPointsDataFrame.rename_axis("Task/StoryPoints", axis='index', inplace=True)
+    # Convert empty values to 0 and print out Finished and unfinished story points
+    storyPointsDataFrame = storyPointsDataFrame.replace("", 0, regex=True)
+    print("Done " + str(storyPointsDataFrame['Done'].astype(int).sum()))
+    print("Not Done " + str(storyPointsDataFrame['Not Done'].astype(int).sum()))
 
     return storyPointsDataFrame
 
