@@ -19,6 +19,21 @@ params = (('key', key),
           ('token', token))
 
 
+# Get Column Ids and name defined for a given Board
+def getColumns(boardId, params=params):
+    listUrl = ''.join(['https://api.trello.com/1/boards/', boardId, '/lists'])
+    responseList = requests.get(listUrl, params=params)
+    listJson = responseList.json()
+    ListDic = {}
+
+    # Get Translation Dictionary from Ids for Field Values of Field Entries
+    for i in listJson:
+        names = i['name']
+        ids = i['id']
+        ListDic[names] = ids
+
+    return ListDic
+
 # Get content of all Column Cards in JSON Format for a given Column
 def accessColumnCards(columnId, params=paramsField):
     columnUrl = ''.join(['https://api.trello.com/1/lists/', columnId, '/cards/'])
@@ -69,7 +84,6 @@ def accessBoardLabels(boardId):
     boardUrl = ''.join(['https://api.trello.com/1/boards/', boardId, '/labels'])
     labelResponse = requests.get(boardUrl, params=params)
     labelJson = labelResponse.json()
-    print(labelJson)
     labelDic = {}
 
     for i in labelJson:
@@ -111,8 +125,8 @@ def getColumnWithAllFields(boardId, columnId):
 
         columnDic[name] = cardDic
 
-        # Convert Dictionary to Dataframe and write it to CSV
-        dataFrame = pd.DataFrame.from_dict(columnDic, orient='index')
+    # Convert Dictionary to Dataframe and write it to CSV
+    dataFrame = pd.DataFrame.from_dict(columnDic, orient='index')
 
     return dataFrame, columnDic
 
@@ -141,6 +155,7 @@ def generateStoryPointsDataFrame(boardId, taskColumnsIds, finishedTaskColumn, st
         currentColumn = accessColumnCards(i)
         foundTasksDic = filterCardsByCustomField(storyPointFieldId, currentColumn)
         storyPointsDic.update(foundTasksDic)
+
     # Differentiate between finished task cards that are labeled as approved and not approved
     doneDic = {}
     notDoneDic = {}
@@ -178,21 +193,48 @@ def writeToCSV(taskDic, csvName):
 
 def main():
     # Id List of a Board and its relevant Columns
-    boardId = 'Qt98t0nJ'
-    sprintBacklogColumnId = '5e184a4bee152d1e2f34e434'
-    doingColumnId = '5e184a57eacbcf7d33c1f968'
-    reviewColumnId = '5e184a61cf27ab269be3c26b'
+    boardIdScrum = 'Qt98t0nJ'
+    scrumBoardListDic = getColumns(boardIdScrum)
+    sprintBacklogColumnIdScrum = scrumBoardListDic['Current Sprint Backlog']
+    doingColumnIdScrum = scrumBoardListDic['Doing']
+    reviewColumnIdScrum = scrumBoardListDic['Reviews']
+    productItemColumn = scrumBoardListDic['Current Sprint Product Items']
+    doneColumnIdScrum = scrumBoardListDic['Done']
+
     # Id of Custom StoryPoint Field
-    fieldStoryPointId = '5e5f7addad92130e3f2dbd60'
+    fieldStoryPointIdScrum = '5e5f7addad92130e3f2dbd60'
 
     # Get all Cards from the Done Column and store them in a CSV File
-    doneColumnId = '5e184a4648a22f2692e637ab'
-    taskColumns = [sprintBacklogColumnId, doingColumnId, reviewColumnId]
-    columnDataFrame, _ = getColumnWithAllFields(boardId, doneColumnId)
-    columnDataFrame.to_csv('FinishedTasks.csv', index=True)
+    taskColumnsScrum = [sprintBacklogColumnIdScrum, doingColumnIdScrum, reviewColumnIdScrum]
+    columnDataFrameScrum, _ = getColumnWithAllFields(boardIdScrum, doneColumnIdScrum)
+    columnDataFrameScrum.to_csv('FinishedTasks.csv', index=True)
     # Generate Story Points Dataframe and csv for tracking
-    storyPointsDataFrame = generateStoryPointsDataFrame(boardId, taskColumns, reviewColumnId, fieldStoryPointId)
-    storyPointsDataFrame.to_csv("StoryPoints.csv", index=True)
+    print("SCRUM Story Points")
+    storyPointsDataFrameScrum = generateStoryPointsDataFrame(boardIdScrum, taskColumnsScrum, reviewColumnIdScrum, fieldStoryPointIdScrum)
+    storyPointsDataFrameScrum.to_csv("StoryPoints.csv", index=True)
+
+    # Id List of the collab Scrum Board and its relevant Columns
+    boardIdScrumCollab = 'pKHNUgeS'
+    collabBoardListDic = getColumns(boardIdScrumCollab)
+    sprintBacklogColumnIdScrumCollab = collabBoardListDic['Current Sprint Backlog']
+    doingColumnIdScrumCollab = collabBoardListDic['Doing']
+    reviewColumnIdScrumCollab = collabBoardListDic['Reviews']
+    doneColumnIdScrumCollab = collabBoardListDic['Done']
+
+    # Id of Custom StoryPoint Field
+    fieldStoryPointIdScrumCollab = '5f8580c44f9d3a3e350904ec'
+
+    # Get all Cards from the Done Column and store them in a CSV File
+    taskColumnsScrumCollab = [sprintBacklogColumnIdScrumCollab, doingColumnIdScrumCollab, reviewColumnIdScrumCollab]
+    columnDataFrameScrumCollab, _ = getColumnWithAllFields(boardIdScrumCollab, doneColumnIdScrumCollab)
+    columnDataFrameScrumCollab.to_csv('FinishedTasksCollab.csv', index=True)
+
+    # Generate Story Points Dataframe and csv for tracking
+    print("CollabStoryPoints")
+    storyPointsDataFrameScrumCollab = generateStoryPointsDataFrame(boardIdScrumCollab, taskColumnsScrumCollab,
+                                                                   reviewColumnIdScrumCollab,
+                                                                   fieldStoryPointIdScrumCollab)
+    storyPointsDataFrameScrumCollab.to_csv("StoryPointsCollab.csv", index=True)
 
 
 if __name__ == "__main__":
